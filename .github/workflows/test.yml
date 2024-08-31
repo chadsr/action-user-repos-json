@@ -11,37 +11,40 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
-      matrix:
-        node-version: [lts/*]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version-file: .node-version
           check-latest: true
           cache: 'npm'
       - run: npm ci
       - run: npm run lint
-      - run: npm run build
+      - run: npm run bundle
   test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
-      matrix:
-        node-version: [lts/*]
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          check-latest: true
+          node-version-file: .node-version
           cache: 'npm'
       - run: npm ci
       - name: Integration tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run test
+  action:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - uses: actions/checkout@v4
       - name: Run action
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         id: repos
         uses: ./
         with:
