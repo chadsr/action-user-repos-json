@@ -1,4 +1,4 @@
-import { getInput, setOutput } from '@actions/core';
+import { getInput, setOutput, debug } from '@actions/core';
 import { fetchRepos } from './repos';
 import fs from 'fs';
 
@@ -24,7 +24,9 @@ const main = async () => {
 
     const repos = await fetchRepos(username, token, minStargazerCount, limit);
     const jsonRepos = JSON.stringify(repos, null, 4);
+    debug(jsonRepos);
     fs.writeFileSync(outputPath, jsonRepos);
+    debug(`Wrote ${repos.length} repos to ${outputPath}`);
     setOutput('json_path', outputPath);
 };
 
