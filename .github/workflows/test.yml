@@ -41,6 +41,12 @@ jobs:
       - run: npm ci
       - name: Integration tests
         run: npm run test
+  action:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - uses: actions/checkout@v4
       - name: Run action
         id: repos
         uses: ./
