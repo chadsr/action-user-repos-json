@@ -1,0 +1,52 @@
+name: Test
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        node-version: [lts/*]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          check-latest: true
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        node-version: [lts/*]
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          check-latest: true
+          cache: 'npm'
+      - run: npm ci
+      - name: Integration tests
+        run: npm run test
+      - name: Run action
+        id: repos
+        uses: ./
+        with:
+          username: 'chadsr'
+          minimumStargazers: 1
+          outputPath: "${{ runner.temp }}/repos.json"
+      - name: Check output file
+        run: cat ${{ steps.repos.outputs.json_path }}

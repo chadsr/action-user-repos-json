@@ -1,0 +1,25 @@
+name: 'get-user-repositories'
+description: 'A Github action to output repositories owned by a user, as a JSON file.'
+branding:
+  icon: 'user'
+  color: 'blue'
+inputs:
+  username:
+    description: 'You can specify to use any user data'
+    default: ${{ github.repository_owner }}
+  minimumStargazers:
+    description: 'The minimum number of stargazers a repository should have'
+    default: '0'
+  limit:
+    description: 'Limit the number of repositories to be retrieved'
+    default: '100'
+  outputPath:
+    description: 'Output file path'
+    default: ${{ github.workspace }}/repositories.json
+outputs:
+  json_path:
+    description: 'The JSON file output'
+runs:
+  using: node20
+  main: dist/index.js
+  post: dist/index.js
