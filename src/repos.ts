@@ -1,5 +1,5 @@
 import { getOctokit } from '@actions/github';
-import { User as GithubUser } from '@octokit/graphql-schema';
+import type { User as GithubUser } from '@octokit/graphql-schema';
 import { Repository } from './types';
 import { gql } from 'graphql-tag';
 import { print } from 'graphql/language/printer';
