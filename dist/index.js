@@ -5319,6 +5319,13 @@ var require_body = __commonJS({
     var { isUint8Array, isArrayBuffer } = require("util/types");
     var { File: UndiciFile } = require_file();
     var { parseMIMEType, serializeAMimeType } = require_dataURL();
+    var random;
+    try {
+      const crypto = require("crypto");
+      random = (max) => crypto.randomInt(0, max);
+    } catch {
+      random = (max) => Math.floor(Math.random(max));
+    }
     var ReadableStream = globalThis.ReadableStream;
     var File = NativeFile ?? UndiciFile;
     var textEncoder = new TextEncoder();
@@ -5361,7 +5368,7 @@ var require_body = __commonJS({
       } else if (ArrayBuffer.isView(object)) {
         source = new Uint8Array(object.buffer.slice(object.byteOffset, object.byteOffset + object.byteLength));
       } else if (util.isFormDataLike(object)) {
-        const boundary = `----formdata-undici-0${`${Math.floor(Math.random() * 1e11)}`.padStart(11, "0")}`;
+        const boundary = `----formdata-undici-0${`${random(1e11)}`.padStart(11, "0")}`;
         const prefix = `--${boundary}\r
 Content-Disposition: form-data`;
         const escape = (str) => str.replace(/\n/g, "%0A").replace(/\r/g, "%0D").replace(/"/g, "%22");
@@ -20266,7 +20273,7 @@ var init_version = __esm({
   "node_modules/@octokit/endpoint/dist-src/version.js"() {
     "use strict";
     init_cjs_shims();
-    VERSION = "9.0.5";
+    VERSION = "9.0.6";
   }
 });
 
@@ -20423,7 +20430,7 @@ var init_add_query_parameters = __esm({
 
 // node_modules/@octokit/endpoint/dist-src/util/extract-url-variable-names.js
 function removeNonChars(variableName) {
-  return variableName.replace(/^\W+|\W+$/g, "").split(/,/);
+  return variableName.replace(/(?:^\W+)|(?:(?<!\W)\W+$)/g, "").split(/,/);
 }
 function extractUrlVariableNames(url) {
   const matches = url.match(urlVariableRegex);
@@ -20437,7 +20444,7 @@ var init_extract_url_variable_names = __esm({
   "node_modules/@octokit/endpoint/dist-src/util/extract-url-variable-names.js"() {
     "use strict";
     init_cjs_shims();
-    urlVariableRegex = /\{[^}]+\}/g;
+    urlVariableRegex = /\{[^{}}]+\}/g;
   }
 });
 
@@ -20629,7 +20636,7 @@ function parse(options) {
     }
     if (url.endsWith("/graphql")) {
       if (options.mediaType.previews?.length) {
-        const previewsFromAcceptHeader = headers.accept.match(/[\w-]+(?=-preview)/g) || [];
+        const previewsFromAcceptHeader = headers.accept.match(/(?<![\w-])[\w-]+(?=-preview)/g) || [];
         headers.accept = previewsFromAcceptHeader.concat(options.mediaType.previews).map((preview) => {
           const format = options.mediaType.format ? `.${options.mediaType.format}` : "+json";
           return `application/vnd.github.${preview}-preview${format}`;
@@ -20723,7 +20730,7 @@ var init_version2 = __esm({
   "node_modules/@octokit/request/dist-src/version.js"() {
     "use strict";
     init_cjs_shims();
-    VERSION2 = "8.4.0";
+    VERSION2 = "8.4.1";
   }
 });
 
@@ -20872,7 +20879,7 @@ var init_dist_src2 = __esm({
         if (options.request.headers.authorization) {
           requestCopy.headers = Object.assign({}, options.request.headers, {
             authorization: options.request.headers.authorization.replace(
-              / .*$/,
+              /(?<! ) .*$/,
               " [REDACTED]"
             )
           });
@@ -20950,7 +20957,7 @@ function fetchWrapper(requestOptions) {
       headers[keyAndValue[0]] = keyAndValue[1];
     }
     if ("deprecation" in headers) {
-      const matches = headers.link && headers.link.match(/<([^>]+)>; rel="deprecation"/);
+      const matches = headers.link && headers.link.match(/<([^<>]+)>; rel="deprecation"/);
       const deprecationLink = matches && matches.pop();
       log.warn(
         `[@octokit/request] "${requestOptions.method} ${requestOptions.url}" is deprecated. It is scheduled to be removed on ${headers.sunset}${deprecationLink ? `. See ${deprecationLink}` : ""}`
@@ -21123,8 +21130,7 @@ function graphql(request2, query, options) {
       );
     }
     for (const key in options) {
-      if (!FORBIDDEN_VARIABLE_OPTIONS.includes(key))
-        continue;
+      if (!FORBIDDEN_VARIABLE_OPTIONS.includes(key)) continue;
       return Promise.reject(
         new Error(
           `[@octokit/graphql] "${key}" cannot be used as variable name`
@@ -21188,7 +21194,7 @@ var init_dist_web3 = __esm({
     init_cjs_shims();
     init_dist_src3();
     init_dist_web();
-    VERSION3 = "7.1.0";
+    VERSION3 = "7.1.1";
     GraphqlResponseError = class extends Error {
       constructor(request2, headers, response) {
         super(_buildMessageForResponseErrors(response));
@@ -23666,7 +23672,7 @@ function iterator(octokit, route, parameters) {
           const response = await requestMethod({ method, url, headers });
           const normalizedResponse = normalizePaginatedListResponse(response);
           url = ((normalizedResponse.headers.link || "").match(
-            /<([^>]+)>;\s*rel="next"/
+            /<([^<>]+)>;\s*rel="next"/
           ) || [])[1];
           return { value: normalizedResponse };
         } catch (error) {
@@ -23734,7 +23740,7 @@ var init_dist_web5 = __esm({
   "node_modules/@octokit/plugin-paginate-rest/dist-web/index.js"() {
     "use strict";
     init_cjs_shims();
-    VERSION6 = "9.2.1";
+    VERSION6 = "9.2.2";
     composePaginateRest = Object.assign(paginate, {
       iterator
     });
