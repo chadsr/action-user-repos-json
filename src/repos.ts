@@ -1,8 +1,8 @@
-import { getOctokit } from '@actions/github';
+import * as github from '@actions/github';
 import type { User as GithubUser } from '@octokit/graphql-schema';
+import type { Octokit } from '@octokit/core';
+
 import { Repository } from './types';
-import { gql } from 'graphql-tag';
-import { print } from 'graphql/language/printer';
 
 /**
  * The maximum number of topics that a GitHub repository can have.
@@ -10,9 +10,7 @@ import { print } from 'graphql/language/printer';
  */
 const MAX_TOPICS = 20;
 
-const MAX_LANGUAGES = 20; // TODO: move this to an action input argument
-
-export const gqlRepositories = gql`
+export const gqlRepositories = `
     query (
         $login: String!
         $limit: Int!
@@ -62,6 +60,7 @@ export const gqlRepositories = gql`
  * @param {string} token - The personal access token used to authenticate with the GitHub API.
  * @param {number} minStargazerCount - The minimum number of stars required for a repository to be included in the result.
  * @param {number} limit - The maximum number of repositories to fetch.
+ * @param {number} languagesLimit - The maximum number of repository language tags to fetch.
  *
  * @return {Promise<Array<Repository>>} A promise that resolves to an array of fetched repository objects.
  */
@@ -70,22 +69,25 @@ export const fetchRepos = async (
     token: string,
     minStargazerCount: number,
     limit: number,
+    languagesLimit: number,
 ): Promise<Array<Repository>> => {
-    const octokit = getOctokit(token);
+    const octokit: Octokit = github.getOctokit(token);
 
-    const query = print(gqlRepositories);
     const variables = {
         login: username,
         minStargazerCount: minStargazerCount,
         limit: limit,
-        language_limit: MAX_LANGUAGES,
+        language_limit: languagesLimit,
         topic_limit: MAX_TOPICS,
     };
 
     const repos: Array<Repository> = [];
     if (limit === 0) return repos;
 
-    const data = await octokit.graphql<{ user: GithubUser }>(query, variables);
+    const data = await octokit.graphql<{ user: GithubUser }>(
+        gqlRepositories,
+        variables,
+    );
 
     if (data.user.repositories.edges) {
         data.user.repositories.edges.forEach((repo) => {
