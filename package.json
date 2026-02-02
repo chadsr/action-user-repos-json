@@ -1,42 +1,42 @@
 {
-  "name": "repos-to-md",
-  "version": "0.1.0",
-  "description": "Output your repositories as hugo markdown",
-  "private": true,
-  "scripts": {
-    "start": "ts-node ./src/index.ts",
-    "package": "tsup ./src/index.ts",
-    "bundle": "npm run format && npm run package",
-    "lint": "eslint .",
-    "format": "eslint --fix .",
-    "test": "vitest"
-  },
-  "exports": {
-    ".": "./dist/index.js"
-  },
-  "engines": {
-    "node": ">=20"
-  },
-  "author": "chadsr",
-  "license": "MIT",
-  "devDependencies": {
-    "@eslint/js": "^9.39.2",
-    "@octokit/graphql-schema": "^15.26.1",
-    "@types/eslint__js": "^9.14.0",
-    "@types/eslint-config-prettier": "^6.11.3",
-    "@types/node": "^25.1.0",
-    "dotenv": "^17.2.3",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.4",
-    "eslint": "^9.39.0",
-    "ts-node": "^10.9.2",
-    "tsup": "^8.5.1",
-    "typescript-eslint": "^8.54.0",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
-  },
-  "dependencies": {
-    "@actions/core": "^2.0.1",
-    "@actions/github": "^6.0.1"
-  }
+    "name": "action-user-repos-json",
+    "version": "0.2.0",
+    "description": "A Github action to output repositories owned by a user, as a JSON file.",
+    "private": true,
+    "scripts": {
+        "start": "ts-node ./src/index.ts",
+        "package": "tsup ./src/index.ts",
+        "bundle": "npm run format && npm run package",
+        "lint": "eslint .",
+        "format": "eslint --fix .",
+        "test": "vitest"
+    },
+    "exports": {
+        ".": "./dist/index.js"
+    },
+    "engines": {
+        "node": ">=20"
+    },
+    "author": "chadsr",
+    "license": "MIT",
+    "devDependencies": {
+        "@eslint/js": "^9.39.2",
+        "@octokit/graphql-schema": "^15.26.1",
+        "@types/eslint__js": "^9.14.0",
+        "@types/eslint-config-prettier": "^6.11.3",
+        "@types/node": "^25.2.0",
+        "dotenv": "^17.2.3",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-prettier": "^5.5.5",
+        "eslint": "^9.39.2",
+        "ts-node": "^10.9.2",
+        "tsup": "^8.5.1",
+        "typescript-eslint": "^8.54.0",
+        "typescript": "^5.9.3",
+        "vitest": "^4.0.18"
+    },
+    "dependencies": {
+        "@actions/core": "^3.0.0",
+        "@actions/github": "^9.0.0"
+    }
 }
