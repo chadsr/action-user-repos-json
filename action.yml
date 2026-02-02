@@ -5,16 +5,16 @@ branding:
   color: "blue"
 inputs:
   username:
-    description: "The Github username to retrieve repositories of."
+    description: "The Github username to retrieve the repositories of"
     default: ${{ github.repository_owner }}
   minimumStargazers:
-    description: "The minimum number of stargazers a repository should have."
+    description: "The minimum number of stargazers a repository should have"
     default: "0"
   limit:
-    description: "Limit the number of repositories to be retrieved."
+    description: "Limit the number of repositories to be retrieved"
     default: "100"
   languagesLimit:
-    description: "Limit the number of associated languages to retrieve for each repository."
+    description: "Limit the number of associated languages to retrieve for each repository"
     default: "10"
   outputPath:
     description: "Output file path"

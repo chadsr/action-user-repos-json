@@ -6,7 +6,7 @@ A Github action to output repositories owned by a user, as a JSON file.
 
 Optional configuration criteria are provided to filter the results.
 
-## Usage
+## Usage Example
 
 ```yaml
 name: User Repos to JSON
@@ -20,8 +20,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          username: 'chadsr'
-          minimumStargazers: 1
+          username: 'chadsr' # The Github username to retrieve the repositories of
+          limit: 10 # Return a maximum of 10 repositories
+          minimumStargazers: 1 # Only return repositories with at least 1 star
+          languagesLimit: 1 # Return only the most prominent programming language used in each repository
+          outputPath: './repositories.json'
       - name: Do something with the JSON file
         run: cat "${{ steps.repos.outputs.json_path }}"
 ```
