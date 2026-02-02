@@ -3,11 +3,12 @@ import { fetchRepos } from './repos';
 import fs from 'fs';
 
 const main = async () => {
-    const username = process.env.GITHUB_USER
-        ? process.env.GITHUB_USER
-        : getInput('username');
+    const username = getInput('username');
 
-    const token = process.env.GITHUB_TOKEN;
+    const token =
+        process.env.GITHUB_TOKEN && process.env.GITHUB_TOKEN !== ''
+            ? process.env.GITHUB_TOKEN
+            : null;
     if (!token) {
         throw new Error('GITHUB_TOKEN is required.');
     }
@@ -19,10 +20,20 @@ const main = async () => {
     const limitInput = getInput('limit');
     const limit = limitInput === '' ? 100 : parseInt(limitInput);
 
+    const languagesLimitInput = getInput('languagesLimit');
+    const languagesLimit =
+        languagesLimitInput === '' ? 10 : parseInt(languagesLimitInput);
+
     let outputPath = getInput('outputPath');
     if (outputPath === '') outputPath = './repos.json';
 
-    const repos = await fetchRepos(username, token, minStargazerCount, limit);
+    const repos = await fetchRepos(
+        username,
+        token,
+        minStargazerCount,
+        limit,
+        languagesLimit,
+    );
     const jsonRepos = JSON.stringify(repos, null, 4);
     debug(jsonRepos);
     fs.writeFileSync(outputPath, jsonRepos);
