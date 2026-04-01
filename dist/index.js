@@ -665,6 +665,21 @@ var require_errors = __commonJS({
       }
       [kSecureProxyConnectionError] = true;
     };
+    var kMessageSizeExceededError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_WS_MESSAGE_SIZE_EXCEEDED");
+    var MessageSizeExceededError = class extends UndiciError {
+      constructor(message) {
+        super(message);
+        this.name = "MessageSizeExceededError";
+        this.message = message || "Max decompressed message size exceeded";
+        this.code = "UND_ERR_WS_MESSAGE_SIZE_EXCEEDED";
+      }
+      static [Symbol.hasInstance](instance) {
+        return instance && instance[kMessageSizeExceededError] === true;
+      }
+      get [kMessageSizeExceededError]() {
+        return true;
+      }
+    };
     module2.exports = {
       AbortError,
       HTTPParserError,
@@ -688,7 +703,8 @@ var require_errors = __commonJS({
       ResponseExceededMaxSizeError,
       RequestRetryError,
       ResponseError,
-      SecureProxyConnectionError
+      SecureProxyConnectionError,
+      MessageSizeExceededError
     };
   }
 });
@@ -1703,6 +1719,9 @@ var require_request = __commonJS({
         if (upgrade && typeof upgrade !== "string") {
           throw new InvalidArgumentError("upgrade must be a string");
         }
+        if (upgrade && !isValidHeaderValue(upgrade)) {
+          throw new InvalidArgumentError("invalid upgrade header");
+        }
         if (headersTimeout != null && (!Number.isFinite(headersTimeout) || headersTimeout < 0)) {
           throw new InvalidArgumentError("invalid headersTimeout");
         }
@@ -1935,12 +1954,18 @@ var require_request = __commonJS({
       } else {
         val = `${val}`;
       }
-      if (request2.host === null && headerName === "host") {
+      if (headerName === "host") {
+        if (request2.host !== null) {
+          throw new InvalidArgumentError("duplicate host header");
+        }
         if (typeof val !== "string") {
           throw new InvalidArgumentError("invalid host header");
         }
         request2.host = val;
-      } else if (request2.contentLength === null && headerName === "content-length") {
+      } else if (headerName === "content-length") {
+        if (request2.contentLength !== null) {
+          throw new InvalidArgumentError("duplicate content-length header");
+        }
         request2.contentLength = parseInt(val, 10);
         if (!Number.isFinite(request2.contentLength)) {
           throw new InvalidArgumentError("invalid content-length header");
@@ -16794,13 +16819,17 @@ var require_util7 = __commonJS({
       return extensionList;
     }
     function isValidClientWindowBits(value) {
+      if (value.length === 0) {
+        return false;
+      }
       for (let i = 0; i < value.length; i++) {
         const byte = value.charCodeAt(i);
         if (byte < 48 || byte > 57) {
           return false;
         }
       }
-      return true;
+      const num = Number.parseInt(value, 10);
+      return num >= 8 && num <= 15;
     }
     var hasIntl = typeof process.versions.icu === "string";
     var fatalDecoder = hasIntl ? new TextDecoder("utf-8", { fatal: true }) : void 0;
@@ -17102,18 +17131,31 @@ var require_permessage_deflate = __commonJS({
     init_cjs_shims();
     var { createInflateRaw, Z_DEFAULT_WINDOWBITS } = require("zlib");
     var { isValidClientWindowBits } = require_util7();
+    var { MessageSizeExceededError } = require_errors();
     var tail = Buffer.from([0, 0, 255, 255]);
     var kBuffer = /* @__PURE__ */ Symbol("kBuffer");
     var kLength = /* @__PURE__ */ Symbol("kLength");
+    var kDefaultMaxDecompressedSize = 4 * 1024 * 1024;
     var PerMessageDeflate = class {
       /** @type {import('node:zlib').InflateRaw} */
       #inflate;
       #options = {};
+      /** @type {boolean} */
+      #aborted = false;
+      /** @type {Function|null} */
+      #currentCallback = null;
+      /**
+       * @param {Map<string, string>} extensions
+       */
       constructor(extensions) {
         this.#options.serverNoContextTakeover = extensions.has("server_no_context_takeover");
         this.#options.serverMaxWindowBits = extensions.get("server_max_window_bits");
       }
       decompress(chunk, fin, callback) {
+        if (this.#aborted) {
+          callback(new MessageSizeExceededError());
+          return;
+        }
         if (!this.#inflate) {
           let windowBits = Z_DEFAULT_WINDOWBITS;
           if (this.#options.serverMaxWindowBits) {
@@ -17123,26 +17165,51 @@ var require_permessage_deflate = __commonJS({
             }
             windowBits = Number.parseInt(this.#options.serverMaxWindowBits);
           }
-          this.#inflate = createInflateRaw({ windowBits });
+          try {
+            this.#inflate = createInflateRaw({ windowBits });
+          } catch (err) {
+            callback(err);
+            return;
+          }
           this.#inflate[kBuffer] = [];
           this.#inflate[kLength] = 0;
           this.#inflate.on("data", (data) => {
-            this.#inflate[kBuffer].push(data);
+            if (this.#aborted) {
+              return;
+            }
             this.#inflate[kLength] += data.length;
+            if (this.#inflate[kLength] > kDefaultMaxDecompressedSize) {
+              this.#aborted = true;
+              this.#inflate.removeAllListeners();
+              this.#inflate.destroy();
+              this.#inflate = null;
+              if (this.#currentCallback) {
+                const cb = this.#currentCallback;
+                this.#currentCallback = null;
+                cb(new MessageSizeExceededError());
+              }
+              return;
+            }
+            this.#inflate[kBuffer].push(data);
           });
           this.#inflate.on("error", (err) => {
             this.#inflate = null;
             callback(err);
           });
         }
+        this.#currentCallback = callback;
         this.#inflate.write(chunk);
         if (fin) {
           this.#inflate.write(tail);
         }
         this.#inflate.flush(() => {
+          if (this.#aborted || !this.#inflate) {
+            return;
+          }
           const full = Buffer.concat(this.#inflate[kBuffer], this.#inflate[kLength]);
           this.#inflate[kBuffer].length = 0;
           this.#inflate[kLength] = 0;
+          this.#currentCallback = null;
           callback(null, full);
         });
       }
@@ -17183,6 +17250,10 @@ var require_receiver = __commonJS({
       #fragments = [];
       /** @type {Map<string, PerMessageDeflate>} */
       #extensions;
+      /**
+       * @param {import('./websocket').WebSocket} ws
+       * @param {Map<string, string>|null} extensions
+       */
       constructor(ws, extensions) {
         super();
         this.ws = ws;
@@ -17286,12 +17357,12 @@ var require_receiver = __commonJS({
             }
             const buffer = this.consume(8);
             const upper = buffer.readUInt32BE(0);
-            if (upper > 2 ** 31 - 1) {
+            const lower = buffer.readUInt32BE(4);
+            if (upper !== 0 || lower > 2 ** 31 - 1) {
               failWebsocketConnection(this.ws, "Received payload length > 2^31 bytes.");
               return;
             }
-            const lower = buffer.readUInt32BE(4);
-            this.#info.payloadLength = (upper << 8) + lower;
+            this.#info.payloadLength = lower;
             this.#state = parserStates.READ_DATA;
           } else if (this.#state === parserStates.READ_DATA) {
             if (this.#byteOffset < this.#info.payloadLength) {
@@ -17313,7 +17384,7 @@ var require_receiver = __commonJS({
               } else {
                 this.#extensions.get("permessage-deflate").decompress(body, this.#info.fin, (error, data) => {
                   if (error) {
-                    closeWebSocketConnection(this.ws, 1007, error.message, error.message.length);
+                    failWebsocketConnection(this.ws, error.message);
                     return;
                   }
                   this.#fragments.push(data);
