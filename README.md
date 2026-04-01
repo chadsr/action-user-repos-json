@@ -2,7 +2,7 @@
 
 [![Test](https://github.com/chadsr/action-user-repos-json/actions/workflows/test.yml/badge.svg)](https://github.com/chadsr/action-user-repos-json/actions/workflows/test.yml)
 
-A Github action to output repositories owned by a user, as a JSON file.
+A Github action to output repositories owned (or contributed to) by a user, as a JSON file.
 
 Optional configuration criteria are provided to filter the results.
 
