@@ -1,10 +1,25 @@
+export type RepositorySortKey =
+    | 'createdAt'
+    | 'name'
+    | 'owner'
+    | 'stargazerCount'
+    | 'updatedAt'
+    | 'url';
+
+export interface RepositoriesOutput {
+    repositories: Repository[];
+    contributions?: Repository[];
+}
+
 export interface Repository {
-    name: string;
+    createdAt: Date;
     description?: string;
     languages: string[];
-    topics: string[];
+    lastContributedAt?: Date;
+    name: string;
+    owner: string;
     stargazerCount: number;
-    createdAt: Date;
+    topics: string[];
     updatedAt: Date;
     url: string;
 }
