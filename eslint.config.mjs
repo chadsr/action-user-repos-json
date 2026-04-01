@@ -8,7 +8,17 @@ export default tsEslint.config(
         ignores: ['dist'],
     },
     eslint.configs.recommended,
-    ...tsEslint.configs.recommended,
+    ...tsEslint.configs.recommendedTypeChecked,
+    {
+        languageOptions: {
+            parserOptions: {
+                projectService: {
+                    allowDefaultProject: ['*.mjs'],
+                },
+                tsconfigRootDir: import.meta.dirname,
+            },
+        },
+    },
     eslintConfigPrettier,
     eslintPluginPrettierRecommended,
 );
