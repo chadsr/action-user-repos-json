@@ -1,5 +1,5 @@
 name: "action-user-repos-json"
-description: "A Github action to output repositories owned by a user, as a JSON file."
+description: "A Github action to output repositories owned (or contributed to) by a user, as a JSON file."
 branding:
   icon: "user"
   color: "blue"
@@ -7,20 +7,32 @@ inputs:
   username:
     description: "The Github username to retrieve the repositories of"
     default: ${{ github.repository_owner }}
-  minimumStargazers:
+  minimum-stargazers:
     description: "The minimum number of stargazers a repository should have"
     default: "0"
   limit:
     description: "Limit the number of repositories to be retrieved"
     default: "100"
-  languagesLimit:
+  languages-limit:
     description: "Limit the number of associated languages to retrieve for each repository"
     default: "10"
-  outputPath:
+  include-contributed:
+    description: "Whether to include repositories the user has contributed to but does not own"
+    default: "false"
+  contributed-limit:
+    description: "Limit the number of contributed-to repositories to retrieve (only used when include-contributed is true)"
+    default: "100"
+  output-path:
     description: "Output file path"
     default: ${{ github.workspace }}/repositories.json
+  sort-by:
+    description: "Repository field to sort results by (createdAt, name, owner, stargazerCount, updatedAt, url)"
+    default: "updatedAt"
+  sort-asc:
+    description: "Sort in ascending order instead of the default descending"
+    default: "false"
 outputs:
-  json_path:
+  json-path:
     description: "The JSON file output"
 runs:
   using: node24
