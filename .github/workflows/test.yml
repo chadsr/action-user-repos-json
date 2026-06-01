@@ -9,28 +9,24 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version-file: .node-version
           check-latest: true
-          cache: 'npm'
+          cache: "npm"
       - run: npm ci
       - run: npm run lint
       - run: npm run bundle
   test:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version-file: .node-version
-          cache: 'npm'
+          cache: "npm"
       - run: npm ci
       - name: Integration tests
         env:
@@ -38,8 +34,6 @@ jobs:
         run: npm run test
   action:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
     steps:
       - uses: actions/checkout@v6
       - name: Run action
@@ -48,8 +42,8 @@ jobs:
         id: repos
         uses: ./
         with:
-          username: 'chadsr'
-          minimumStargazers: 1
-          outputPath: "${{ runner.temp }}/repos.json"
+          username: "chadsr"
+          minimum-stargazers: 1
+          output-path: "${{ runner.temp }}/repos.json"
       - name: Check output file
-        run: cat ${{ steps.repos.outputs.json_path }}
+        run: cat ${{ steps.repos.outputs.json-path }}
