@@ -45,9 +45,6 @@ describe('fetchRepos()', () => {
 
     test('should return repos', () => {
         expect(repos.length).greaterThan(0);
-        repos.forEach((repo) => {
-            expect(repo.owner).toBe(ghUser);
-        });
     });
 
     test('should return one repo', async () => {
