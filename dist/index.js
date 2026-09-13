@@ -24025,7 +24025,7 @@ var gqlRepoFields = `
     stargazerCount
     createdAt
     updatedAt
-    languages(first: $language_limit) {
+    languages(first: $language_limit, orderBy: { field: SIZE, direction: DESC }) {
         edges {
             node {
                 name
