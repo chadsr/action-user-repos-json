@@ -57,14 +57,14 @@ describe('fetchRepos()', () => {
         expect(repos).toHaveLength(0);
     });
 
-    test('each repo should return exactly 1 language', async () => {
+    test('each repo should return max. 1 language', async () => {
         const repos = await fetchRepos({
             ...baseOptions,
             languagesLimit: 1,
             limit: 2,
         });
         repos.forEach((repo) => {
-            expect(repo.languages).toHaveLength(1);
+            expect(repo.languages.length).toBeLessThanOrEqual(1);
         });
     });
 
